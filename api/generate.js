@@ -47,56 +47,62 @@ VALIDATION RULES:
 - Every headline ≤ 30 characters
 - Every description ≤ 90 characters`;
 
-export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY environment variable not set.' });
-  }
-
-  const { url, keyword } = req.body || {};
-  if (!url || !keyword) {
-    return res.status(400).json({ error: 'Missing required fields: url and keyword.' });
-  }
-
-  const userMessage = `[URL]: ${url}\n[Keyword]: ${keyword}\n\nAnalyse the product/service at this URL and generate the full RSA output following all framework rules. Remember: headlines max 30 chars, descriptions max 90 chars, headlines 1 and 2 must contain the exact keyword "${keyword}".`;
-
-  try {
-    const geminiRes = await fetch(
+async function callGemini(apiKey, body, maxRetries = 4) {
+  let attempt = 0;
+  while (attempt <= maxRetries) {
+    const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: SYSTEM_PROMPT }]
-          },
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: userMessage }]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 4096,
-            responseMimeType: 'application/json'
-          }
-        })
+        body: JSON.stringify(body),
       }
     );
+
+    if (res.ok) return res;
+
+    if (res.status === 429 && attempt < maxRetries) {
+      const waitMs = Math.pow(2, attempt) * 1000;
+      console.log(`429 rate limit — retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await sleep(waitMs);
+      attempt++;
+      continue;
+    }
+
+    return res;
+  }
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY environment variable not set.' });
+
+  const { url, keyword } = req.body || {};
+  if (!url || !keyword) return res.status(400).json({ error: 'Missing required fields: url and keyword.' });
+
+  const userMessage = `[URL]: ${url}\n[Keyword]: ${keyword}\n\nAnalyse the product/service at this URL and generate the full RSA output following all framework rules. Remember: headlines max 30 chars, descriptions max 90 chars, headlines 1 and 2 must contain the exact keyword "${keyword}".`;
+
+  const geminiBody = {
+    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+    generationConfig: {
+      temperature: 0.8,
+      maxOutputTokens: 4096,
+      responseMimeType: 'application/json',
+    },
+  };
+
+  try {
+    const geminiRes = await callGemini(apiKey, geminiBody);
 
     if (!geminiRes.ok) {
       const errBody = await geminiRes.text();
@@ -111,7 +117,6 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Empty response from Gemini.', raw: geminiData });
     }
 
-    // Parse and validate JSON
     let parsed;
     try {
       const cleaned = rawText.replace(/```json|```/g, '').trim();
