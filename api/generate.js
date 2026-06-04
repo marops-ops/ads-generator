@@ -47,34 +47,6 @@ VALIDATION RULES:
 - Every headline ≤ 30 characters
 - Every description ≤ 90 characters`;
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function callGemini(apiKey, body, maxRetries = 4) {
-  let attempt = 0;
-  while (attempt <= maxRetries) {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      }
-    );
-
-    if (res.ok) return res;
-
-    if (res.status === 429 && attempt < maxRetries) {
-      const waitMs = Math.pow(2, attempt) * 1000;
-      console.log(`429 rate limit — retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
-      await sleep(waitMs);
-      attempt++;
-      continue;
-    }
-
-    return res;
-  }
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -83,38 +55,41 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY environment variable not set.' });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY environment variable not set.' });
 
   const { url, keyword } = req.body || {};
   if (!url || !keyword) return res.status(400).json({ error: 'Missing required fields: url and keyword.' });
 
   const userMessage = `[URL]: ${url}\n[Keyword]: ${keyword}\n\nAnalyse the product/service at this URL and generate the full RSA output following all framework rules. Remember: headlines max 30 chars, descriptions max 90 chars, headlines 1 and 2 must contain the exact keyword "${keyword}".`;
 
-  const geminiBody = {
-    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-    generationConfig: {
-      temperature: 0.8,
-      maxOutputTokens: 4096,
-      responseMimeType: 'application/json',
-    },
-  };
-
   try {
-    const geminiRes = await callGemini(apiKey, geminiBody);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+    });
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.text();
-      console.error('Gemini API error:', errBody);
-      return res.status(502).json({ error: `Gemini API error: ${geminiRes.status}`, detail: errBody });
+    if (!response.ok) {
+      const errBody = await response.text();
+      console.error('Anthropic API error:', errBody);
+      return res.status(502).json({ error: `Anthropic API error: ${response.status}`, detail: errBody });
     }
 
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const data = await response.json();
+    const rawText = data?.content?.[0]?.text;
 
     if (!rawText) {
-      return res.status(502).json({ error: 'Empty response from Gemini.', raw: geminiData });
+      return res.status(502).json({ error: 'Empty response from Claude.', raw: data });
     }
 
     let parsed;
@@ -122,7 +97,7 @@ export default async function handler(req, res) {
       const cleaned = rawText.replace(/```json|```/g, '').trim();
       parsed = JSON.parse(cleaned);
     } catch (e) {
-      return res.status(502).json({ error: 'Failed to parse Gemini response as JSON.', raw: rawText });
+      return res.status(502).json({ error: 'Failed to parse response as JSON.', raw: rawText });
     }
 
     return res.status(200).json(parsed);
