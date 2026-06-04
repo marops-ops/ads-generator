@@ -1,0 +1,157 @@
+.section {
+  padding: 48px 0 0;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.labelNum {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.input {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+  width: 100%;
+  transition: border-color var(--transition), background var(--transition);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--accent-border);
+  background: var(--bg-raised);
+}
+
+.input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--accent);
+  color: #0a0a0a;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 12px 28px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-display);
+  letter-spacing: 0.3px;
+  align-self: flex-start;
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.button:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btnIcon {
+  font-size: 16px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(10,10,10,0.2);
+  border-top-color: #0a0a0a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 0.5px solid var(--border);
+}
+
+.shortcutsLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.shortcutTag {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border);
+  border-radius: 99px;
+  padding: 3px 10px;
+}

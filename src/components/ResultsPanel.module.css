@@ -1,0 +1,27 @@
+.results {
+  margin-top: 0;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 48px 0 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 0.5px;
+  background: var(--border);
+}
+
+.dividerLabel {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

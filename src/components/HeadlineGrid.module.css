@@ -1,0 +1,123 @@
+.section {
+  margin-top: 40px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.num {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.title {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 400px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.card:hover {
+  border-color: var(--border-mid);
+  background: var(--bg-raised);
+}
+
+.cardKw {
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+}
+
+.cardKw:hover {
+  border-color: var(--accent);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.cardNum {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.kwBadge {
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  border: 0.5px solid var(--accent-border);
+  border-radius: 99px;
+  padding: 1px 6px;
+}
+
+.charOk {
+  font-size: 10px;
+  color: var(--green);
+  margin-left: auto;
+}
+
+.charOver {
+  font-size: 10px;
+  color: var(--red);
+  margin-left: auto;
+}
+
+.cardText {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.cardShortcut {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
